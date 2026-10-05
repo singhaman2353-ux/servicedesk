@@ -4,6 +4,7 @@ import com.servicedesk.user.User;
 import java.time.Clock;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -37,6 +38,21 @@ public class AuditService {
     @Transactional
     public void record(User actor, AuditAction action, AuditResourceType resourceType,
                        Object resourceId, String details, String ipAddress) {
+        save(actor, action, resourceType, resourceId, details, ipAddress);
+    }
+
+    /**
+     * Records an entry in its OWN transaction, so it survives even if the caller's transaction
+     * rolls back (or there is none). Used for security events such as failed logins.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordIndependently(User actor, AuditAction action, AuditResourceType resourceType,
+                                    Object resourceId, String details, String ipAddress) {
+        save(actor, action, resourceType, resourceId, details, ipAddress);
+    }
+
+    private void save(User actor, AuditAction action, AuditResourceType resourceType,
+                      Object resourceId, String details, String ipAddress) {
         auditLogRepository.save(new AuditLog(
                 actor,
                 action,

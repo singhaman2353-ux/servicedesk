@@ -20,6 +20,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.HttpHeaders;
 
 /**
  * Turns every failure into a clean {@link ApiError}. Clients never see stack traces,
@@ -41,7 +42,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiError> handleApiException(ApiException ex, HttpServletRequest request) {
-        return build(ex.getStatus(), ex.getCode(), ex.getMessage(), request, List.of());
+        ResponseEntity<ApiError> response =
+                build(ex.getStatus(), ex.getCode(), ex.getMessage(), request, List.of());
+
+        if (ex instanceof TooManyRequestsException tooMany) {
+            return ResponseEntity.status(response.getStatusCode())
+                    .header(HttpHeaders.RETRY_AFTER, String.valueOf(tooMany.getRetryAfterSeconds()))
+                    .body(response.getBody());
+        }
+
+        return response;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

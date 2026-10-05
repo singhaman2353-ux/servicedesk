@@ -62,7 +62,7 @@ public class UserService {
         }
     }
 
-    static String normalizeEmail(String email) {
+    public static String normalizeEmail(String email) {
         return email.strip().toLowerCase(Locale.ROOT);
     }
 

@@ -1,6 +1,7 @@
 package com.servicedesk.auth;
 
 import com.servicedesk.user.UserResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,5 +24,11 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
+        // TCP peer address only. X-Forwarded-For is never read here, because clients can forge it.
+        return authService.login(request, http.getRemoteAddr());
     }
 }
